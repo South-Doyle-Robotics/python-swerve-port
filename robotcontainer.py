@@ -14,8 +14,10 @@ class robotcontainer:
         self.controller = XboxController(0)
         print("Setting default command")
 
-        self.drivetrain.setDefaultCommand = self.drivetrain.drive(self.controller.Axis.kLeftY, self.controller.Axis.kLeftX, self.controller.Axis.kRightX)
-
+        #drivetrain.setDefaultCommand = self.drivetrain.drive(self.controller.Axis.kLeftY, 
+        #                                        self.controller.Axis.kLeftX, 
+        #                                        self.controller.Axis.kRightX)
+        self.drivetrain.setDefaultCommand = self.drivetrain.drive(0, 0, 0)
         print("Default command set")
 
 

@@ -7,6 +7,8 @@ from commands2 import Command, CommandBase
 
 import wpimath.kinematics
 
+# this isn't used yet. maybe someday we can get basic swerve working THEN fight the
+# commands battle.
 
 class Drive_Swerve(CommandBase):
 	def __init__(self, drivetrain, getLeftRight, getForwardBack, getRotate):

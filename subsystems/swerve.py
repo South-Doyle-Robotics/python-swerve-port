@@ -7,8 +7,8 @@ import constants
 from rev import CANSparkMax
 from rev import CANSparkMaxLowLevel
 from rev import SparkMaxPIDController
-from rev._rev import SparkMaxAbsoluteEncoder
-from rev._rev import AbsoluteEncoder
+from rev import SparkMaxAbsoluteEncoder
+from rev import AbsoluteEncoder
 from rev import RelativeEncoder
 
 from wpimath.kinematics import SwerveModuleState
@@ -37,9 +37,8 @@ class MAXSwerveModule:
 		self.drivepid = self.drivemotor.getPIDController()
 		self.turnpid = self.turnmotor.getPIDController()
 
-# These want CAN sensors not encoders
-#		self.drivepid.setFeedbackDevice(self.driveenc)
-#		self.turnpid.setFeedbackDevice(self.turnenc)
+		self.drivepid.setFeedbackDevice(self.driveenc)
+		self.turnpid.setFeedbackDevice(self.turnenc)
 		
 		self.driveenc.setPositionConversionFactor(constants.driveEncPositionFactor)
 		self.driveenc.setVelocityConversionFactor(constants.driveEncVelocityFactor)
@@ -47,9 +46,6 @@ class MAXSwerveModule:
 		self.turnenc.setPositionConversionFactor(constants.turnEncPositionFactor)
 		self.turnenc.setVelocityConversionFactor(constants.turnEncVelocityFactor)
 
-		# On the MAXSwerves, this is inverted in the java code
-                # But apparently you can't make it inverted on brushless motors????
-                # This throws an error at runtime
 		self.turnenc.setInverted(True)
 
 		self.turnpid.setPositionPIDWrappingEnabled(True)
@@ -110,21 +106,24 @@ class MAXSwerveModule:
 		return swerve_pos
 
         # The Java takes in a modulestate rather than speed/angle. verify where this is used passes speed/angle
-	def setDesiredState(self, speed, angle): # angle in degrees, speed in mps
+	def setDesiredState(self, desiredState): # angle in degrees, speed in mps
 		# angle comes in from a swervestate so should be a rotation2d already
-		chassisOffset = Rotation2d(self.chassisAngularOffset)
-		desiredAngle = angle+chassisOffset
-		self.drivepid.setReference(speed, CANSparkMax.ControlType.kVelocity)
+		correctedDesiredState = SwerveModuleState(desiredState.speed, 
+			Rotation2d(desiredState.angle.radians() + self.chassisAngularOffset))
 
-		desiredState = SwerveModuleState(speed, desiredAngle)
-		self.swerve_state.optimize(desiredState, Rotation2d(self.turnenc.getPosition()))
+		optimizedDesiredState = SwerveModuleState.optimize(correctedDesiredState, Rotation2d(self.turnenc.getPosition()))
+		
+		#self.swerve_state.optimize(correctedDesiredState, Rotation2d(self.turnenc.getPosition()))
+		# test self.swerve_state.optimize(correctedDesiredState, Rotation2d(0.0))
 
-# I don't think this is necessary
-#		self.swerve_state.speed = speed # assuming this is m/s since there's an explicit fps as well
+		self.drivepid.setReference(optimizedDesiredState.speed, CANSparkMax.ControlType.kVelocity)
+		self.turnpid.setReference(optimizedDesiredState.angle.radians(), CANSparkMax.ControlType.kPosition)
+#		self.drivepid.setReference(self.swerve_state.speed, CANSparkMax.ControlType.kVelocity)
+#		self.turnpid.setReference(self.swerve_state.angle.radians(), CANSparkMax.ControlType.kPosition)
 
-		self.drivepid.setReference(speed, CANSparkMax.ControlType.kVelocity)
-		self.turnpid.setReference(desiredAngle.degrees(), CANSparkMax.ControlType.kPosition)
-
+		self.desiredState = desiredState # This looks like an error in the java. Shouldn't this be optimizedDesiredState or correctedDesiredState?
+		# Either way, it's never used anywhere.
+		
 	def resetEncoders(self):
 		self.driveenc.setPosition(0)
 	

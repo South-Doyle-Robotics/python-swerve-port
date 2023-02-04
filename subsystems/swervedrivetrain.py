@@ -67,7 +67,7 @@ class drivetrain(SubsystemBase):
 	def getOdometryRotation(self):
 		return self.odometry.getPose().rotation()
 
-	def drive(self, xSpeed, ySpeed, rot, field=True):
+	def drive(self, xSpeed, ySpeed, rot, field=False):
 		self.ySpeed = ySpeed * constants.maxSpeedMPS
 		self.xSpeed = xSpeed * constants.maxSpeedMPS
 		self.rot = rot * constants.maxAngularSpeed
@@ -77,13 +77,12 @@ class drivetrain(SubsystemBase):
 			self.cs = ChassisSpeeds.fromFieldRelativeSpeeds(self.xSpeed, self.ySpeed, self.rot, Rotation2d.fromDegrees(self.gyro.getAngle()))
 		else:
 			self.cs = ChassisSpeeds(self.xSpeed, self.ySpeed, self.rot)
-
+		print("Chassis speed: ", self.xSpeed, self.ySpeed, self.rot)
 		states = constants.kinematics.toSwerveModuleStates(self.cs)
-		self.FL.setDesiredState(states[0].speed, states[0].angle)
-		self.FR.setDesiredState(states[1].speed, states[1].angle)
-		self.BL.setDesiredState(states[2].speed, states[2].angle)
-		self.BR.setDesiredState(states[3].speed, states[3].angle)
-
+		#self.FL.setDesiredState(states[0])
+		#self.FR.setDesiredState(states[1])
+		#self.BL.setDesiredState(states[2])
+		self.BR.setDesiredState(states[3])
 
 	def getAllStates(self):
 		fl = self.FL.getState()
@@ -102,6 +101,8 @@ class drivetrain(SubsystemBase):
 	
 	def periodic(self):
 #		print("Drive train periodic")
+
+		pass
 # This does get called .. periodically. So is it not getting joystick updates?
 		self.odometry.update(self.gyro.getRotation2d(), 
 			self.FL.getPosition(),
